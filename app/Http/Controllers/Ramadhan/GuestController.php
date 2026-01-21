@@ -27,7 +27,7 @@ class GuestController extends Controller
 
         // Jika request AJAX, kembalikan partial view
         if ($request->ajax()) {
-            return view('ramadhan.guests.partials.table', compact('jamaah'));
+            return view('ramadhan.Guests.partials.table', compact('jamaah'));
         }
 
         return view('ramadhan.Guests.index', compact('jamaah'));
