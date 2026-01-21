@@ -57,7 +57,7 @@
 
    <!-- Result -->
    <div id="jamaah-table-container">
-      @include('ramadhan.guests.partials.table')
+      @include('ramadhan.Guests.partials.table')
    </div>
 
 </div>
