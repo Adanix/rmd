@@ -97,9 +97,6 @@
          </div>
       </header>
       {{-- Menu khusus Guest --}}
-      @if(auth()->guest())
-      @include('ramadhan.layouts.guest')
-      @endif
 
       @if(auth()->check())
       <header class="navbar-expand-md">
