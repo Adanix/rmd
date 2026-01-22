@@ -220,53 +220,54 @@ class JamaahController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv'
         ]);
 
-        // Load file ke array
         $data = Excel::toArray([], $request->file('file'));
-        $rows = $data[0]; // sheet pertama
+        $rows = $data[0];
 
         if (count($rows) == 0) {
             return back()->with('error', 'File kosong atau tidak valid.');
         }
 
-        // Lewati header (baris 1)
         foreach (array_slice($rows, 1) as $index => $row) {
             $currentRow = $index + 2;
 
-            // Jika baris kosong, skip
+            // Skip baris kosong
             if (!isset($row[0]) || $row[0] === null) {
                 continue;
             }
 
-            // Set default values
             $nama       = trim($row[0]);
             $alamat     = trim($row[1] ?? '');
-            $ekonomi    = trim($row[2] ?? 'Mampu');
-            // $setoran    = trim($row[3] ?? '');
+            $setoranRaw = trim($row[3] ?? '');
             $keterangan = trim($row[4] ?? '');
             $notes      = trim($row[5] ?? '');
 
-            // Normalisasi ekonomi - konversi ke lowercase dulu, lalu sesuaikan
-            $ekonomiLower = strtolower($ekonomi);
+            /** =========================
+             * VALIDASI & SET SETORAN
+         ========================= */
+            if ($setoranRaw === '' || $setoranRaw === null) {
+                $setoran = null;
+                $ekonomi = null;
+            } elseif (is_numeric($setoranRaw) && (int)$setoranRaw >= 1) {
+                $setoran = (int) $setoranRaw;
 
-            if ($ekonomiLower === 'mampu') {
-                $ekonomi = 'Mampu';
-            } elseif ($ekonomiLower === 'kurang mampu' || $ekonomiLower === 'kurangmampu') {
-                $ekonomi = 'Kurang Mampu';
+                // Ekonomi ditentukan dari setoran
+                $ekonomi = ($setoran === 1)
+                    ? 'Kurang Mampu'
+                    : 'Mampu';
             } else {
-                return back()->with('error', "Nilai ekonomi tidak valid pada baris {$currentRow}: '{$row[2]}'. Harus 'Mampu' atau 'Kurang Mampu'.");
+                return back()->with(
+                    'error',
+                    "Setoran tidak valid pada baris {$currentRow}: '{$row[3]}'."
+                );
             }
-
-            // Hitung setoran otomatis
-            $setoran = ($ekonomi == 'Mampu') ? 2 : 1;
 
             Jamaah::create([
                 'nama'       => $nama,
                 'alamat'     => $alamat,
+                'setoran'    => $setoran,
                 'ekonomi'    => $ekonomi,
-                'setoran'    => !empty($setoran) ? $setoran : null,
-                // 'setoran'    => $setoran,
-                'keterangan' => !empty($keterangan) ? $keterangan : null,
-                'notes'      => !empty($notes) ? $notes : null,
+                'keterangan' => $keterangan ?: null,
+                'notes'      => $notes ?: null,
             ]);
         }
 
